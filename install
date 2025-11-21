@@ -1,0 +1,3 @@
+python pip -q install 'gwosc==0.7.1'
+python pip -q install 'gwosc==0.7.1'
+python pip -q install 'gwpy==3.0.12'
