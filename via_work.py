@@ -237,14 +237,15 @@ from pycbc.filter import get_fd_waveform
 print('Time domain waveforms: ', td_approximants())
 print('Frequency domain waveforms: ', fd_approximants())
 
-merger = Merger("GW231123")
+merger = Merger('GW231123_135430-v2')
 strain = merger.strain('H1')
 strain = highpass(strain, 15.0)
 strain = resample_to_delta_t(strain, 1.0/2048)
 
 plt.plot(strain.sample_times, strain)
 plt.xlabel('Time(s)')
-plt.show()
+plt.savefig('waveform.png')
+#plt.show()
 
 #waveform change for each mass in binary (including total mass of merger)
 plt.figure(figsize=plt.figaspect(0.4))
@@ -352,7 +353,7 @@ import matplotlib.pyplot as plt
 from pycbc.catalog import Merger
 from pycbc.filter import resample_to_delta_t, highpass
 
-merger = Merger("GW231123")
+m = Merger('GW231123_135430-v2')
 strain = merger.strain('H1')
 strain = highpass(strain, 15.0)
 strain = resample_to_delta_t(strain, 1.0/2048)
