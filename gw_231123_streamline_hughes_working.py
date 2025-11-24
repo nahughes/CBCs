@@ -120,16 +120,15 @@ plt.savefig('spec-q_transform.png')
 ########################################################################
 
 
-from pycbc.waveform import get_td_waveform, fd_approximants, td_approximants
+from pycbc.waveform import get_td_waveform, get_fd_waveform, fd_approximants, td_approximants
 # print('Time domain waveforms: ', td_approximants())
 # print('Frequency domain waveforms: ', fd_approximants())
 
 from pycbc.catalog import Merger
-from pycbc.filter import resample_to_delta_t, highpass, get_fd_waveform
+from pycbc.filter import resample_to_delta_t, highpass 
 
 merger = Merger('GW231123_135430-v2')
-# strain = merger.strain('H1') #H1 is labeled hdata2 on line 72
-strain = merger.strain('hdata2') #H1 is labeled hdata2 on line 72
+strain = merger.strain('H1')
 strain = highpass(strain, 15.0)
 strain = resample_to_delta_t(strain, 1.0/2048)
 
