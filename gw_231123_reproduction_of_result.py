@@ -126,8 +126,9 @@ from pycbc.waveform import get_td_waveform, fd_approximants, td_approximants
 from pycbc.catalog import Merger
 from pycbc.filter import resample_to_delta_t, highpass
 
-merger = Merger('GW231123_135430-v2')
-strain = merger.strain('H1')
+# m = Merger('GW231123_135430-v2')
+# strain = m.strain('H1')
+strain = hdata2
 strain = highpass(strain, 15.0)
 strain = resample_to_delta_t(strain, 1.0/2048)
 
@@ -138,3 +139,27 @@ plt.savefig('waveform.png')
 
 
 #See line 250 or 262 of Via_work to continue
+
+plt.figure(figsize=plt.figaspect(0.4))
+for m in [137, 101, 223, 101]:
+    hp, hc = get_fd_waveform(approximant="IMRPhenomD",
+                            mass1=m,
+                            mass2=m,
+                            delta_t=1.0/4096,
+                            f_lower=101)
+    plt.plot(hp.sample_times, hp, label='$m_{\odot 1,2}=%s$' % m)
+plt.legend()
+plt.grid
+
+
+### Matched Filtering
+### Matched Filtering
+### Matched Filtering
+### Matched Filtering
+### Matched Filtering
+
+#! pip install -q 'lalsuite==7.25' 'PyCBC==2.6.0'
+#import numpy
+sample_rate = 1024
+data_length = 1024
+apx = 'IMRPhenomD'

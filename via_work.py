@@ -132,6 +132,9 @@ from gwpy.timeseries import TimeSeries
 gps = event_gps('GW231123')
 print("GW231123 GPS:", gps)
 
+ldata = TimeSeries.fetch_open_data('L1', *segment, verbose=True)
+
+
 ldata = TimeSeries.fetch_open_data('L1', int(gps)-512, int(gps)+512, cache=True)
 print("GW231123 data")
 print(ldata)
@@ -354,7 +357,7 @@ from pycbc.catalog import Merger
 from pycbc.filter import resample_to_delta_t, highpass
 
 m = Merger('GW231123_135430-v2')
-strain = merger.strain('H1')
+strain = m.strain('H1')
 strain = highpass(strain, 15.0)
 strain = resample_to_delta_t(strain, 1.0/2048)
 
