@@ -569,12 +569,12 @@ for data, title in [(conditioned, 'Original H1 Data'),
 
 ####2.3
 
-""" Read and Precondition GW Strain Data """
+""" PyCBC Tutorial, Signal Consistency and Significance """
 #in this unit we will precondition as before, calculate PSD, and re-weight SNR
 #time-series of different detector strains
 
 #useful for cross-examining strains from multiple detectors
-
+""" Read and Precondition GW Strain Data """
 m = Merger("GW231123_135430")
 ifos = ['H1', 'L1']
 data = {}
