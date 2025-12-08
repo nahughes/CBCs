@@ -522,7 +522,7 @@ from pycbc.filter import sigma
 dt = time - conditioned.start_time
 aligned = template.cyclic_time_shift(dt)
 
-aligned /= signma(aligned, psd=psd, low_frequency_cutoff=20.0)
+aligned /= sigma(aligned, psd=psd, low_frequency_cutoff=20.0)
 
 aligned = (aligned.to_frequencyseries() * snrp).to_timeseries()
 aligned.start_time = conditioned.start_time
@@ -661,7 +661,7 @@ for ifo in ifos:
     plt.ylabel('$chi^2_r$')
     plt.show()
 
-""" #Reweight SNR to down-weight times not in signal """
+""" #Re-weight SNR to down-weight times not in signal """
 #combine SNR time series and our X_r^2 time series
 #two papers explaining process in Doc
 
@@ -764,6 +764,302 @@ plt.xlim(1, 6)
 plt.show()
 print("The p-value associated w/ GW231123 peak is {}".format(pvalue))
 
+
+### 3.1
 """ #Introduction to Parameter Estimation """
 
 #guide use example model, we will attempt w/ GW231123 data
+
+#####NOTE: New pip install below
+# ! pip install -U -q bilby==2.6.0 dynesty==2.1.5 corner==2.2.3
+import numpy as np
+import corner
+
+bilby.core.utils.log.setup_logger(log_level='WARNING')
+
+for module in [np, matplotlib, bilby, corner]:
+    print(f"Loaded {module.__name__}: {module.__version__}")
+
+""" #Bayesian Inference """
+def sinusoid(time, freq):
+    return np.sin(2 * np.pi * freq * time)
+
+def gaussian_exponential(time, alpha):
+    return gaussian_exponential(-(time/alpha)**2)
+
+def model_Ms(time, freq, alpha):
+    return gaussian_exponential(time, alpha) * sinusoid(time, freq)
+
+freq = 2
+alpha = 0.5
+
+fig, ax = plt.subplots()
+
+ax.plot(time, sinusod(time, freq), label="Sinusoid")
+ax.plot(time, gaussian_exponential(time, alpha), label="Gaussian exponential")
+ax.plot(time, model_Ms(time, freq, alpha), label="Sine Gaussian")
+ax.set(xlabel="Time [s]", ylabel="Observed y values [arb. units]")
+ax.legend()
+plt.show()
+
+#should produce graph comparing waelengths of Sinusoidal, Gaussian exponential, and
+#Sine Gaussian waveforms (use model to compare to actual data using Bayesian Inference)
+
+#!!!SKIP: rest of 3.1 uses non-GW sample data to run, go to section 3.2 for GW instruction!!!
+
+
+###3.2
+from bilby.core.prior import Uniform, PowerLaw
+from bilby.gw.conversion import convert_to_lal_binary_black_hole_parameters, generate_all_bbh_parameters
+
+#make Bibly more terse
+bilby.core.utils.log.setup_logger(log_level="WARNING")
+
+from gwpy.timeseries import TimeSeries
+
+print(bilby.__version__)
+
+""" #Getting the data: GW131123 """
+#need trigger time, define it as a variable
+time_of_event = 1384782888.6
+
+H1 = bilby.gw.detector.get_empty_inderometer("H1")
+L1 = bilby.gw.detector.get_empty_inderometer("L1")
+
+post_trigger_duration = 2
+duration = 4
+analysis_start = time_of_event + post_trigger_duration - duration
+
+H1_analysis_data = TimeSeries.fetch_open_data(
+    "H1", analysis_start, analysis_start + duration, sample_rate=4096, cache=True)
+
+
+L1_analysis_data = TimeSeries.fetch_open_data(
+    "L1", analysis_start, analysis_start + duration, sample_rate=4096, cache=True)    
+
+H1_analysis_data.plot()
+plt.show()
+#will not show much because dominated by low freq noise
+
+H1.set_strain_data_from_gwpy_timeseries(H1_analysis_data)
+L1.set_strain_data_from_gwpy_timeseries(L1_analysis_data)
+
+#download the PSD
+psd_duration = duration * 32
+psd_start_time = analysis_start - psd_duration
+H1_psd_data = TimeSeries.fetch_open_data(
+    "H1", psd_start_time, psd_start_time + psd_duration, sample_rate=4096, cache=True)
+L1_psd_data = TimeSeries.fetch_open_data(
+    "L1", psd_start_time, psd_start_time + psd_duration, sample_rate=4096, cache=True)
+
+psd__alpha = 2 * H1.strain_data.roll_off / duration
+H1_psd = H1_psd_data(fftlength=duration, overlap=0, window=("tukey", psd__alpha), method="median")
+L1_psd = L1_psd_data(fftlength=duration, overlap=0, window=("tukey", psd__alpha), method="median")
+
+#initialise the PSD
+H1.power_spectral_density = bilby.gw.detector.PowerSpectralDensity(
+    frequency_array=H1_psd.frequencies.value, psd_array=H1_psd.value)
+L1.power_spectral_density = bilby.gw.detector.PowerSpectralDensity(
+    frequency_array=H1_psd.frequencies.value, psd_array=L1_psd.value)
+
+#looking at the data
+fig, ax = plt.subplots()
+idxs = H1.strain_data.frequency_mask
+ax.loglog(H1.strain_data.frequency_array[idxs],
+          np.abs(H1.strain_data.frequency_domain_strain[idxs]))
+ax.loglog(H1.power_spectral_density.frequency_array[idxs],
+          H1.power_spectral_density.asd_array[idxs])
+ax.set_xlabel("Frequency [Hz]")
+ax.set_ylabel("Strain [strain/$\sqrt{Hz}$]")
+plt.show()
+
+#adjust max freq to 1024Hz
+H1.maximum_frequency = 1024
+L1.maximum_frequency = 1024
+
+fig, ax = plt.subplots()
+idxs = H1.strain_data.frequency_mask
+ax.loglog(H1.strain_data.frequency_array[idxs],
+          np.abs(h1.strain_data.frequency_domain_strain[idxs]))
+ax.loglog(H1.power_spectral_density.frequency_array[idxs],
+          H1.power_spectral_density.asd_array[idxs])
+ax.set_xlabel("Frequency [Hz]")
+ax.set_ylabel("Strain [strain/$\sqrt{Hz}$]")
+plt.show()
+
+""" #Low Dimensional Analysis """
+#review chirp mass parameter w/ Dr. Hughes
+
+#Create a prior
+prior = bilby.core.prior.PriorDict()
+prior['chirp_mass'] = Uniform(name='chirp_mass', minimum=30.0, maximum=32.5)
+prior['mass_ratio'] = Uniform(name='mass_ratio', minimum=0.5, maximum=1)
+prior['phase'] = Uniform(name="phase", minimum=0, maximum=2*np.pi)
+prior['geocent_time'] = Uniform(name="geocent_time", minimum=time_of_event-0.1, maximum=time_of_event+0.1)
+prior['a_1'] = 0.0
+prior['a_2'] = 0.0
+prior['tilt_1'] = 0.0
+prior['tilt_2'] = 0.0
+prior['phi_12'] = 0.0
+prior['phi_j1'] = 0.0
+prior['dec'] = -1.2232 #currentrly Dec for other target, find Declination for our Target
+prior['ra'] = 2.19432 #currently RA for other target, find Right Ascension for our Target
+prior['theta_jn'] = 1.89694 #currently theta for other target, find theta for our Target
+prior['psi'] = 0.532268 #currently psi for other target, find psi for our Target
+prior['luminosity_distance'] = PowerLaw(alpha=2, name='luminosity_distance', minimum=50, maximum=2000, unit='Mpc', latex_label='$d_L$')
+
+#create a likelihood
+#first put our "data" created above into list of interferometers (the order is arbitrary)
+interferometers = [H1, L1]
+
+#next create a dictionary of arguments which we pass into the LALSimulation waveform (specify waveform approximant here)
+waveform_arguments = dict(
+    waveform_approximant='IMRPhenomXP', reference_frequency=100., catch_waveform_errors=True)
+
+#next create a waveform_generator object to wrap some of the jobs of converting between parameters etc
+waveform_generator = bilby.gw.WaveformGenerator(
+    frequency_domain_source_model=bilby.gw.source.lal_binary_black_hole,
+    waveform_arguments=waveform_arguments,
+    parameter_conversion=convert_to_lal_binary_black_hole_parameters)
+
+#finally create likelihood, passing in what is needed to get going
+likelihood = bilby.gw.likelihood.GraviitationalWaveTransient(
+    interferometers, waveform_generator, priors=prior,
+    time_marginalization=True, phase_marginalization=True, distance_marginalization=True)
+#marginalization parameters = True (Bayesian inference). Analytically marginalize (integrate) over the time/phase
+#of the system while sampling to reduce parameter space and make it easier to sample.
+#Bilby will then figure out posteriors for these marginalized parameters
+
+""" #Run the Analysis """
+result_short = bilby.run_sampler(
+    likelihood, prior, sampler='dynesty', outdir='short', label="GW231123",
+    conversion_function=bibly.gw.conversion.generate_all_bbh_parameters,
+    nlive=250, dlogz=1., #Argument used to make things fast, NOT recommended for general use
+    clean=True,
+)
+
+""" #Looking at the Outputs """
+#posterior samples stored in pandas data fram (spreadsheet format)
+result_short.posterior
+
+#pull out specific parameters needed
+result_short.posterior["chirp_mass"]
+
+#just numbers rather than pandas object
+Mc = result_short.posterior["chirp_mass"].values
+
+#useful values i.e. 90% credible interval (C.I.)
+lower_bound = np.quantile(Mc, 0.05)
+upper_bound = np.quantile(Mc, 0.95)
+median = np.quantile(Mc, 0.5)
+print("Mc = {} with a 90% C.I. = {} -> {}".format(median, lower_bound, upper_bound))
+
+#plot the chirp mass in a histogram adding a region to indicate the 90% C.I.
+fig, ax = plt.subplots()
+ax.hist(result_short.posterior["chirp_mass"], bins=20)
+ax.axvspan(lower_bound, upper_bound, color='C1', alpha=0.4)
+ax.axvline(median, color='C1')
+ax.set_xlabel("chirp mass")
+plt.show()
+
+#result object has built-in methods to make different plots such as corner plots.
+#Can add the priors if you are only plotting parameters which you sampled in
+result_short.plot_corner(parameters=["chirp_mass", "mass_ratio", "geocent_time", "phase"], prior=True)
+
+#can also plot lines indicating specific points
+parameters = dict(mass_1=137, mass_2=101)
+result_short.plot_corner(parameters)
+#in this plot can see correlation between m1 and m2
+
+"""" #Meta Data """
+#result also stores meta data, like the priors
+result_short.priors
+
+#and the details of the analysis itself
+result_short.sampler_kwargs["nlive"]
+
+#get out the Bayes factor for the signal vs. Gaussian noise
+print("ln Bayes factor = {} +/- {}".format(
+    result_short.log_bayes_factor, result_short.log_evidence_err))
+
+###3.3
+""" #Discovering and Using Published Posterior Samples """
+#Possibly new pip install
+#! pip install -U -q 'corne==2.2.3' 'bilby==2.6.0' 'astropy==7.0.1'
+
+import h5py
+import pandas as pd
+import corner
+
+#select the event
+label = 'GW231123'
+#if you do not have wget installed, dowload manually from browser
+
+posterior_file = './'+label+'_GWTC-4.hdf5'
+posterior = h5py.File(posterior_file, 'r')
+
+#look into the file structure
+print('This file contains four fatasets: ', posterior.keys())
+
+#dataset containing samples drawn from the prior used for the analyses
+print(posterior['Overall_posterior'].dtype.names)
+
+#use pandas to load up array of samples
+samples = pd.DataFrame.from_records(np.array(posterior['Overall_posterior']))
+samples
+
+""" #Plotting """
+#plot them all with corner package
+corner.corner(samples.values, labels=['costthetajn',
+                                  'distance [Mpc]',
+                                  'ra',
+                                  'dec',
+                                  'mass1 [Msun],
+                                  'mass2 [Msun],
+                                  'spin1',
+                                  'spin2',
+                                  'costilt1',
+                                  'costilt2'])
+
+#each one and two dimensional histogram is a marginalized probability density function.
+#manually select one parameter and plot four diff marginalized distributions (i.e. luminosity)
+plt.hist(posterior['prior']['luminosity_distance_Mpc'], bins = 100, label='prior', alpha=0.8, density=True)
+plt.hist(posterior['IMRPhenomPv2_posterior']['luminosity_distance_Mpc'], bins = 100, label='IMRPhenomPv2 posterior', alpha=0.8, density=True)
+plt.hist(posterior['SEOBNRv3_posteriore']['luminosity_distance_Mpc'], bine = 1--, label='SEOBNRv3 posterior', alpha=0/8, density=True)
+plt.hist(posterior['Overall_posterior']['luminosity_distance_Mpc'], bins = 100, label='Overall posterior', alpha=0/8, density=True)
+plt.xlabel(r'$D_L (Mpc)$')
+plt.ylabel('Probability Density Function')
+plt.legend()
+plt.show()
+
+""" #Computing New Quantities """
+#masses given are ones measured at detector i.e. in the detector frame
+#to get actual source frame masses of the source BHs, correct for cosmological redshift of the GW
+#forces us to assume a cosmological model
+import astropy.units as u
+from astropy.cosmology import Planck15, z_at_value
+
+#now compute redshift value for all samples (using only the distance value)
+z = np.array([z_at_value(Planck15.luminosity_distance * u.Mpc) for dist in samples['luminosity_distance_Mpc']])
+
+#plot the marginalized probability density functions
+corner.corner(samples[['m1_source_frame_Msun', 'm2_source_frame_Msun', 'redshift']].values, labels=['m1 (source)',
+                                                                                                'm2 (source)',
+                                                                                                'z'])
+
+""" #Calculating Credible Intervals """
+#use Bibly to calculate summary statistics for posterior like the median and 90% C.I.
+bibly.core.utils.log.setup_logger(log_level='WARNING')
+
+#calculate the detector frame chirp mass
+mchirp = ((samples['m1_detector_frame_Msun'] * samples['m2_detector_frame_Msun'])**(3./5))/\
+         (samples['m1_detector_frame_Msun'] + samples['m2_detector_frame_Msun'])**(1./5)
+
+#initialize a SampleSummary object to describe the chirp mass posterior samples
+chirp_mass_samples_summary = bilby.core.utils.SamplesSummary(samples=mchirp, average='median')
+print('The median chirp mass = {} Msun'.format(chirp_mass_samples_summary.median))
+print('The 90% credible interval for the chirp mass is {} - {} Msun'.format(chirp_mass_samples_summary.lower_absolute_credible_interval,
+                                                                        chirp_mass_samples_summary.upper_absolute_credible_interval))
+
+
+# END OF MAIN TUTORIALS (go over possible extension units w/ Dr. Hughes, mainly Á2 and A3)
