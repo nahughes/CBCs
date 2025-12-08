@@ -819,7 +819,7 @@ from gwpy.timeseries import TimeSeries
 
 print(bilby.__version__)
 
-""" #Getting the data: GW131123 """
+""" #Getting the data: GW231123 """
 #need trigger time, define it as a variable
 time_of_event = 1384782888.6
 
@@ -902,7 +902,7 @@ prior['tilt_1'] = 0.0
 prior['tilt_2'] = 0.0
 prior['phi_12'] = 0.0
 prior['phi_j1'] = 0.0
-prior['dec'] = -1.2232 #currentrly Dec for other target, find Declination for our Target
+prior['dec'] = -1.2232 #currently Dec for other target, find Declination for our Target
 prior['ra'] = 2.19432 #currently RA for other target, find Right Ascension for our Target
 prior['theta_jn'] = 1.89694 #currently theta for other target, find theta for our Target
 prior['psi'] = 0.532268 #currently psi for other target, find psi for our Target
