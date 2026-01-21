@@ -8,12 +8,12 @@ print(gwosc.__version__)
 from gwosc.datasets import find_datasets
 from gwosc import datasets
 
-print("Current list of available catalogs")
-print(find_datasets(type="catalog"))
+#print("Current list of available catalogs")
+#print(find_datasets(type="catalog"))
 
-gwtc4 = datasets.find_datasets(type='events', catalog='GWTC-4-confident')
-print('GWTC-4 events:', gwtc4)
-print("")
+#gwtc4 = datasets.find_datasets(type='events', catalog='GWTC-4-confident')
+#print('GWTC-4 events:', gwtc4)
+#print("")
 
 from gwosc.datasets import event_gps
 gps = event_gps('GW231123_135430-v2')
@@ -22,16 +22,16 @@ print(gps)
 from gwosc.datasets import event_at_gps
 print(datasets.event_at_gps(1384782888)) #event gps
 
-from gwosc.datasets import run_segment
-print(run_segment('04'))
+#from gwosc.datasets import run_segment
+#print(run_segment('04'))
 
 #from gwosc import urls
-from gwosc.locate import get_event_urls
-urls = get_event_urls('GW231123_135430-v2')
-print(urls)
+#from gwosc.locate import get_event_urls
+#urls = get_event_urls('GW231123_135430-v2')
+#print(urls)
 
-urls = get_event_urls('GW231123_135430-v2', duration=32, detector='H1')
-print(urls)
+#urls = get_event_urls('GW231123_135430-v2', duration=32, detector='H1')
+#print(urls)
 
 #### 1.2
 
@@ -150,14 +150,14 @@ plot
 
 #### 1.3
 
-#import warnings
-#warnings.filterwarnings("ignore", "Wswiglal-redir-stdio")
+import warnings
+warnings.filterwarnings("ignore", "Wswiglal-redir-stdio")
 
 from gwosc.datasets import event_gps
 from gwpy.timeseries import TimeSeries
 
 gps = event_gps('GW231123_135430-v2')
-print("GW231123_135430-v2 GPS:", gps)
+#print("GW231123_135430-v2 GPS:", gps)
 
 ldata = TimeSeries.fetch_open_data('L1', int(gps)-512, int(gps)+512, cache=True)
 print("GW231123_135430-v2 data")
@@ -261,8 +261,8 @@ from pycbc.catalog import Merger
 from pycbc.filter import resample_to_delta_t, highpass
 from pycbc.filter import get_fd_waveform
 
-print('Time domain waveforms: ', td_approximants())
-print('Frequency domain waveforms: ', fd_approximants())
+#print('Time domain waveforms: ', td_approximants())
+#print('Frequency domain waveforms: ', fd_approximants())
 
 #waveform change for each mass in binary (including total mass of merger)
 plt.figure(figsize=plt.figaspect(0.4))
@@ -419,9 +419,9 @@ strain = merger.strain('H1')
 strain = highpass(strain, 15.0)
 strain = resample_to_delta_t(strain, 1.0/2048)
 
-plt.plot(strain.sample_times, strain)
-plt.xlabel('Time(s)')
-plt.savefig('preconditioned waveform.png')
+#plt.plot(strain.sample_times, strain)
+#plt.xlabel('Time(s)')
+#plt.savefig('preconditioned waveform.png')
 #plt.show()
 
 #OR this code
@@ -441,10 +441,10 @@ plt.savefig('preconditioned waveform.png')
 #!!!may not be necessary to do with our target
 
 #remove 2 seconds (n seconds) of data from both ends of sample time
-conditioned = strain.crop(2, 2)
-plt.plot(conditioned.sample_times, conditioned)
-plt.xlabel('Time(s)')
-plt.show()
+#conditioned = strain.crop(2, 2)
+#plt.plot(conditioned.sample_times, conditioned)
+#plt.xlabel('Time(s)')
+#plt.show()
 
 """ #Calculate the Power Spectral Density (PSD) """
 #estimate the PSD
@@ -777,8 +777,8 @@ import corner
 
 bilby.core.utils.log.setup_logger(log_level='WARNING')
 
-for module in [np, matplotlib, bilby, corner]:
-    print(f"Loaded {module.__name__}: {module.__version__}")
+#for module in [np, matplotlib, bilby, corner]:
+#    print(f"Loaded {module.__name__}: {module.__version__}")
 
 """ #Bayesian Inference """
 def sinusoid(time, freq):
@@ -819,7 +819,7 @@ from gwpy.timeseries import TimeSeries
 
 print(bilby.__version__)
 
-""" #Getting the data: GW231123 """
+""" #Getting the data """
 #need trigger time, define it as a variable
 time_of_event = 1384782888.6
 
@@ -967,16 +967,16 @@ plt.show()
 result_short.plot_corner(parameters=["chirp_mass", "mass_ratio", "geocent_time", "phase"], prior=True)
 
 #can also plot lines indicating specific points
-parameters = dict(mass_1=137, mass_2=101)
-result_short.plot_corner(parameters)
+#parameters = dict(mass_1=137, mass_2=101)
+#result_short.plot_corner(parameters)
 #in this plot can see correlation between m1 and m2
 
 """" #Meta Data """
 #result also stores meta data, like the priors
-result_short.priors
+#result_short.priors
 
 #and the details of the analysis itself
-result_short.sampler_kwargs["nlive"]
+#result_short.sampler_kwargs["nlive"]
 
 #get out the Bayes factor for the signal vs. Gaussian noise
 print("ln Bayes factor = {} +/- {}".format(
