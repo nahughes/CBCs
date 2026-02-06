@@ -1020,10 +1020,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
- git config --local pull.rebase false
