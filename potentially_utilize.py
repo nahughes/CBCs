@@ -573,7 +573,8 @@ def multi_detector_analysis(gps):
     
     return snr, chisq, nsnr
 
-
+#note: might need to relocate this! 
+#check for m properly being accounted for in light-travel time
 def calculate_significance(m, nsnr, snr):
     from pycbc.detector import Detector
     
