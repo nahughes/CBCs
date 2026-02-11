@@ -576,7 +576,8 @@ def multi_detector_analysis(gps):
 
 def calculate_significance(m, nsnr, snr):
     from pycbc.detector import Detector
-    
+    # how is m involved? m = Merger('GW...')
+    #this function may need more to be fully implemented
     ifos = ['H1', 'L1']
     
     #Calculate light-travel time between detectors
